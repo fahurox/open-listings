@@ -2,13 +2,13 @@
 <html lang="">
 
 <head>
-  <%~ includeFile('../partials/shared/head', it); %>
+  <%~ include('../partials/shared/head', it); %>
 </head>
 
 <body>
-  <%~ includeFile('../partials/shared/navbar', it); %>
+  <%~ include('../partials/shared/navbar', it); %>
   <div class="container">
-    <%~ includeFile('../partials/shared/lead', it); %>
+    <%~ include('../partials/shared/lead', it); %>
 
     <div class="form-group w-100 py-2">
       <div class="w-100"><b data-trans="tag-language">Tag language: </b></div>
@@ -27,10 +27,10 @@
         <label for='events'></label><textarea name='tags' id='events' placeholder="Tags" readonly></textarea>
       </div>
     </div>
-    <%~ includeFile('../partials/conf/prepare_js', it); %>
-    <%~ includeFile('../partials/shared/footer', it); %>
+    <%~ include('../partials/conf/prepare_js', it); %>
+    <%~ include('../partials/shared/footer', it); %>
   </div>
-  <%~ includeFile('../partials/conf/before_body_close', it); %>
+  <%~ include('../partials/conf/before_body_close', it); %>
 </body>
 
 </html>

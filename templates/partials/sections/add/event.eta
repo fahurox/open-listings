@@ -31,7 +31,7 @@
         <input name="toDate" class="form-control" id="toDate" type="date">
       </div>
       <div class="form-group w-100 py-2">
-        <%~ includeFile('tag', it); %>
+        <%~ include('tag', it); %>
       </div>
       <div>
         <input name="font" id="font" value='Open Sans' type="hidden">

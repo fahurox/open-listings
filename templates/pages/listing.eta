@@ -2,7 +2,7 @@
 <html lang="">
 
 <head>
-  <%~ includeFile('../partials/shared/head', it); %>
+  <%~ include('../partials/shared/head', it); %>
   <% if(typeof title !== 'undefined' && title === 'Reactivate') { %>
   <style>
     body {
@@ -15,12 +15,12 @@
 
 
 <body>
-  <%~ includeFile('../partials/shared/navbar', it); %>
+  <%~ include('../partials/shared/navbar', it); %>
   <div class="container">
-    <%~ includeFile('../partials/shared/lead', it); %>
+    <%~ include('../partials/shared/lead', it); %>
 
     <div class="listing">                                         <% /* <----------- start of listing -- */ %>
-      <%~ includeFile('../partials/sections/breadcrumb', it); %>
+      <%~ include('../partials/sections/breadcrumb', it); %>
       <p data-trans="(posted-by)">Posted by:</p>
       <div id="user">
         <img src="" id='avatar' width="80" height="80" alt="User">
@@ -90,11 +90,11 @@
     </div>                                                 <% /* <----------- end of img */ %>
     <% } %>
 
-  <%~ includeFile('../partials/conf/prepare_js', it); %>
-  <%~ includeFile('../partials/shared/footer', it); %>
+  <%~ include('../partials/conf/prepare_js', it); %>
+  <%~ include('../partials/shared/footer', it); %>
   </div>
 
-  <%~ includeFile('../partials/conf/before_body_close', it); %>
+  <%~ include('../partials/conf/before_body_close', it); %>
   <script>
     {
       const scriptElement = document.createElement("script")

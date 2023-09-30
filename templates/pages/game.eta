@@ -2,18 +2,18 @@
 <html lang="">
 
 <head>
-  <%~ includeFile('partials/head', it); %>
+  <%~ include('partials/head', it); %>
 </head>
 
 <body lang="en">
   <div class="container">
-    <%~ includeFile('partials/navbar', it); %>
-    <%~ includeFile('../partials/shared/lead', it); %>
+    <%~ include('partials/navbar', it); %>
+    <%~ include('../partials/shared/lead', it); %>
     <br>
     <div id="game-map"></div>
-    <%~ includeFile('partials/footer', it); %>
+    <%~ include('partials/footer', it); %>
   </div>
-  <%~ includeFile('partials/before_body_close', it); %>
+  <%~ include('partials/before_body_close', it); %>
 </body>
 
 </html>
