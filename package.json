@@ -19,7 +19,7 @@
     "test": "node --experimental-vm-modules node_modules/jest/bin/jest.js",
     "test:e2e": "NODE_ENV=api tap --no-coverage && ava",
     "doc": "rimraf docs && jsdoc -c jsdoc.conf.json",
-    "postinstall": "node-prune"
+    "//postinstall": "node-prune"
   },
   "type": "module",
   "keywords": [
