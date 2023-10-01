@@ -50,10 +50,11 @@ async function routes(fastify) {
      */
     const kickOut = (request, reply) => {
         reply.setCookie(COOKIE_NAME, {})
-        request.session.destroy()
+        request.session?.destroy()
         delete request.params.username
         delete request.params.proof
     }
+
     /* GET logout. */
     fastify.get('/logout', (request, reply) => {
         kickOut(request, reply)

@@ -2,13 +2,13 @@
 <html lang="">
 
 <head>
-  <%~ includeFile('../partials/shared/head', it); %>
+  <%~ include('../partials/shared/head', it); %>
 </head>
 
 <body>
-  <%~ includeFile('../partials/shared/navbar', it); %>
+  <%~ include('../partials/shared/navbar', it); %>
   <div class="container">
-    <%~ includeFile('../partials/shared/lead', it); %>
+    <%~ include('../partials/shared/lead', it); %>
     <section id="docs">
       <header class="row">
         <div class="col-sm-6">
@@ -36,10 +36,10 @@
     <h3 id="<%= sections[i].id %>"><%= sections[i].id %></h3>
     <%~ sections[i].html %>
     <% } %>
-    <%~ includeFile('../partials/shared/footer', it); %>
+    <%~ include('../partials/shared/footer', it); %>
   </div>
-  <%~ includeFile('../partials/conf/prepare_js', it); %>
-  <%~ includeFile('../partials/conf/before_body_close', it); %>
+  <%~ include('../partials/conf/prepare_js', it); %>
+  <%~ include('../partials/conf/before_body_close', it); %>
 </body>
 
 </html>

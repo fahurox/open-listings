@@ -196,7 +196,7 @@ async function build(doRun) {
     // TODO: find a way to strip very long ejs logging errors
     fastify.register(viewsPlugin, {
         engine: {
-            eta: Eta,
+            eta: new Eta.Eta(),
         },
         templates: 'templates',
         options: { useWith: true },
@@ -302,7 +302,7 @@ async function build(doRun) {
     const prepareData = async () => {
         const mongo = fastify.mongo?.db
         const redis = fastify.redis
-        
+
         const redisAPI = new RedisAPI(redis, mongo)
         redisAPI.purgeKeys()
         await redisAPI.cacheIds()
