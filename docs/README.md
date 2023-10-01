@@ -75,8 +75,8 @@ ADMIN_EMAIL2=moderatorEmail
 SENDGRID_API_KEY=
 APP_NAME=OLisings-en/fr/ar/..
 DEFAULT_LANG=en-US/fr/ar/..
-IS_REDIS_CACHE=true # Consider turning to true, to use cached listings (next version)
-IS_MONGO_DB=true # Whether to use MongoDB server or just NeDB (for development purposes!) think of NeDB as Sqlite with a MongoDB API !
+IS_REDIS_CACHE=false # Consider turning to true, to use cached listings (next version)
+IS_MONGO_DB=false # Whether to use MongoDB server or just NeDB (for development purposes!) think of NeDB as Sqlite with a MongoDB API !
 ``` 
 
 NeDB support for development purposes is work in progress, and contribution is welcome :)
