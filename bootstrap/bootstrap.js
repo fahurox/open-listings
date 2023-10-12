@@ -3,7 +3,7 @@ import { faker as fakerFr } from '@faker-js/faker/locale/fr'
 import { bold, green } from 'colorette'
 import { config as dotenv } from 'dotenv'
 import fs from 'fs'
-import jsf from 'json-schema-faker'
+import { JSONSchemaFaker } from 'json-schema-faker'
 import { MongoClient } from 'mongodb'
 import path from 'path'
 import request from 'request'
@@ -28,8 +28,8 @@ const __filename = fileURLToPath(import.meta.url)
 const __dirname = path.dirname(__filename)
 dotenv()
 
-let jsf_en, jsf_fr
-jsf_en = jsf_fr = jsf
+let jsf_en, jsf_fr, jsf_ar
+jsf_en = jsf_fr = jsf_ar = JSONSchemaFaker
 
 jsf_en.extend('faker', () => fakerEn)
 jsf_fr.extend('faker', () => fakerFr)
@@ -40,6 +40,7 @@ jsf_fr.extend('faker', () => fakerFr)
 const states = {
     en: getStateNames('en'),
     fr: getStateNames('fr'),
+    ar: getStateNames('ar'),
 }
 
 const readDictionary = (lang) =>
@@ -49,6 +50,7 @@ const readDictionary = (lang) =>
         .split('\n')
 const french = readDictionary('fr')
 const english = readDictionary('en')
+const arabic = readDictionary('ar')
 
 const getWords = (dic, n) => {
     const word = () => dic[Math.floor(Math.random() * dic.length)]
@@ -56,10 +58,11 @@ const getWords = (dic, n) => {
     for (let i = 0; i < n; i++) res += ` ${word()}`
     return res.substring(1)
 }
-const langs = ['en', 'fr', 'en']
+const langs = ['en', 'fr', 'ar']
 const langsFaker = {
     en: { jsf: jsf_en, words: (n) => getWords(english, n) },
     fr: { jsf: jsf_fr, words: (n) => getWords(french, n) },
+    ar: { jsf: jsf_ar, words: (n) => getWords(arabic, n) },
 }
 
 const sections = Object.values(Sections)
@@ -67,10 +70,11 @@ let items = []
 
 // https://github.com/sandstrom/country-bounding-boxes/blob/master/bounding-boxes.json
 // Approximate france bounding box: 41.2632185 	51.268318 	-5.4534286 	9.8678344
-const minLng = -5.4534286
-const maxLng = 9.8678344
-const minLat = 41.2632185
-const maxLat = 51.268318
+// Algeria bounding box -8.68, 19.06, 12.0, 37.12
+const minLng = -8.68
+const maxLng = 19.06
+const minLat = 12.0
+const maxLat = 37.12
 /** */
 function getRandomInRange(from, to, fixed) {
     return (Math.random() * (to - from) + from).toFixed(fixed) * 1
@@ -109,7 +113,7 @@ function fakeItems(docsCount) {
 // PRESENCE OF DATABASES, COLLECTIONS, SETTING INDEXES
 const ops = {}
 ops.checkEnvironmentData = async function checkEnvironmentData(url) {
-    if (!dataStores._isMongo) return;
+    if (!dataStores._isMongo) return
     // log({ level: 'info', message: 'Checking environment data' })
     const client = await MongoClient.connect(url)
     // Use the admin database for the operation
@@ -189,7 +193,6 @@ ops.createIndexes = async function createIndexes() {
         await listingCollection.ensureIndexAsync({ fieldName: 'div' })
         // await listingCollection.ensureIndexAsync({ geolocation: '2dsphere' })
 
-
         await commentCollection.ensureIndexAsync({ fieldName: 'to' })
         await commentCollection.ensureIndexAsync({ fieldName: 'from' })
         await commentCollection.ensureIndexAsync({ fieldName: 'sent' })
@@ -198,7 +201,6 @@ ops.createIndexes = async function createIndexes() {
         await tmpUsersCollection.ensureIndexAsync({ fieldName: 'createdAt', expireAfterSeconds: 60 * 10, unique: true })
     }
     log(`Indexes created successfully`)
-
 }
 
 /*********************************************************************************************** */
@@ -212,7 +214,6 @@ ops.seedDevelopmentData = async function seedDevelopmentData(colListings) {
     fakeItems(docsCount)
     const options = { ordered: true }
     items.forEach((item) => transformers['createTime'](item, seconds++))
-
     return colListings.insertAsync ? await colListings.insertAsync(items) : await colListings.insertMany(items, options)
 }
 
@@ -230,11 +231,7 @@ ops.famousSearches = function famousSearches() {
     const fileSyncEn = fs.readFileSync(path.join(__dirname, taxonomyPathEn)).toString()
     const fileContentEn = fileSyncEn.replace(',', '_').split('\n').filter(Boolean)
 
-    const googleTagsEn = [
-        ...new Set(
-            load(fileContentEn).filter((arr) => arr.length === 3 && arr[2].length < 30)
-        ),
-    ]
+    const googleTagsEn = [...new Set(load(fileContentEn).filter((arr) => arr.length === 3 && arr[2].length < 30))]
         .map((arr) => arr[1])
         .slice(1, 200)
     googleTagsEn.forEach((search) => {

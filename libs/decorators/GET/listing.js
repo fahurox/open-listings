@@ -4,7 +4,7 @@ import * as Crypto from '../../services/routines/crypto.js'
 import * as Strings from '../../services/routines/strings.js'
 // eslint-disable-next-line no-unused-vars
 import * as Types from '../../../types.d.js'
-import { logger } from '../../../utils.js'
+import { config, logger } from '../../../utils.js'
 
 export default (fastify) => {
     const { redis } = fastify
@@ -18,7 +18,8 @@ export default (fastify) => {
     return async (req, reply) => {
         const viewer = req.params.username
         const mongoHex = /^(?=[a-f\d]{24}$)(\d+[a-f]|[a-f]+\d)/i
-        const [err, elem] = mongoHex.test(req.params.id)
+        const isIdValid = config('IS_MONGO_DB') ? mongoHex.test(req.params.id) : true
+        const [err, elem] = isIdValid
             ? await to(QInstance.getListingById(req.params.id, false, viewer))
             : ['NOT_FOUND', undefined]
         if (err === 'NOT_FOUND' || !elem) {

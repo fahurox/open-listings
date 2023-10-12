@@ -1,6 +1,6 @@
 // eslint-disable-next-line no-unused-vars
 import * as Types from '../../../types.d.js'
-import { logger } from '../../../utils.js'
+import { config, logger } from '../../../utils.js'
 import { Actions } from '../../constraints/constants.js'
 import queries from '../../services/external-apis/mongo-queries.js'
 import { safeText } from '../../services/external-apis/safe-text.js'
@@ -26,7 +26,9 @@ export default (fastify) => {
         const mongoHex = /^(?=[a-f\d]{24}$)(\d+[a-f]|[a-f]+\d)/i
         // TODO: fix messaging system
         let receiver = Crypto.decrypt(key, body.username)
-        const [err, elem] = mongoHex.test(body.id || '')
+
+        const isIdValid = config('IS_MONGO_DB') ? mongoHex.test(body.id || '') : true
+        const [err, elem] = isIdValid
             ? await to(QInstance.getListingById(body.id, false, receiver))
             : ['NOT_FOUND', undefined]
         if (err) {

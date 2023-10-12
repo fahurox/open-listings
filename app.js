@@ -9,6 +9,7 @@ import Backend from 'i18next-fs-backend'
 import crypto from 'node:crypto'
 import path from 'path'
 import { fileURLToPath } from 'url'
+import { plugins } from './_app_.js'
 import bootstrap from './bootstrap/bootstrap.js'
 import { options } from './config/options/_options_.js'
 import errorHandler from './libs/decorators/error.js'
@@ -24,7 +25,6 @@ import { cache } from './libs/services/external-apis/mongo-mem.js'
 import RedisAPI from './libs/services/external-apis/redis.js'
 import Mailer from './libs/services/mailer.js'
 import { Collections } from './types.d.js'
-import { plugins } from './_app_.js'
 
 import { bold, green } from 'colorette'
 // eslint-disable-next-line no-unused-vars
@@ -196,10 +196,9 @@ async function build(doRun) {
     // TODO: find a way to strip very long ejs logging errors
     fastify.register(viewsPlugin, {
         engine: {
-            eta: new Eta.Eta(),
+            eta: new Eta.Eta({ useWith: true }),
         },
         templates: 'templates',
-        options: { useWith: true },
     })
     /*********************************************************************************************** */
     // !!PRE-HANDLERS AND HOOKS !!

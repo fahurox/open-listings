@@ -14,7 +14,7 @@ export const setupI18n = async () => {
     })
 
     const cookies = getCookies()
-
+    
     i18next
         .use(HttpApi)
         .use(LanguageDetector)
@@ -40,21 +40,22 @@ export const setupI18n = async () => {
             // load: 'languageOnly',
         })
         .then(function (t) {
-            if (cookies.locale) {
-                i18next.changeLanguage(cookies.locale).then((t) => {
+            if (cookies['locale']) {
+                i18next.changeLanguage(cookies['locale']).then((t) => {
                     const localize = locI18next.init(i18next, { selectorAttr: 'data-trans' })
                     refreshTrans(localize)
                     // TODO: It seems not to be working sometimes
-                    document.documentElement.setAttribute('lang', cookies.locale)
-                    document.body.setAttribute('lang', cookies.locale)
+                    document.documentElement.setAttribute('lang', cookies['locale'])
+                    document.body.setAttribute('lang', cookies['locale'])
                     // Set right to left languages 
-                    // if (cookies.locale === 'ar') {
+                    // if (cookies['locale'] === 'ar') {
                     //     document.body.setAttribute('dir', 'rtl')
                     // }
                     const langOptions = document.getElementsByTagName('option')
-                    const opt = [...langOptions].find((opt) => opt.value === cookies.locale)
-                    opt.selected = 'selected'
-                    console.log('SET LANGUAGE TO: ' + cookies.locale)
+                    const opt = [...langOptions].find((opt) => opt.value === cookies['locale'] || opt.value.startsWith(cookies['locale']))
+                    if(opt) opt['selected'] = true;
+                    
+                    console.log('SET LANGUAGE TO: ' + cookies['locale'])
                 })
             }
         })

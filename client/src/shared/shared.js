@@ -13,7 +13,7 @@ import { setupPell } from './editor/setup-pell.js'
 import { setupTabUuid } from './fingerprint/tabUuid.js'
 import { setupScrollBlink } from './focus/scroll&blink.js'
 // import { setupFontPicker } from './fonts/setup-font-picker'
-import { CheckCSS } from 'checkcss'
+// import { CheckCSS } from 'checkcss'
 import { setupI18n } from './i18n/setup-i18n.js'
 import { loadFile } from './load-file/load-file.js'
 import { country } from './maps/create-maps/state.js'
@@ -116,8 +116,8 @@ export const setupShared = () => {
     // Global objects that I need as inline JS inside HTML (Could be attached 100% in JS though)
     window.loadFile = loadFile
     if (['development', 'localhost'].includes(process.env.NODE_ENV)) {
-        const checkcss = new CheckCSS();
-        checkcss.scan().watch();
+        // const checkcss = new CheckCSS();
+        // checkcss.scan().watch();
     }
 
 }

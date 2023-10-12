@@ -135,7 +135,7 @@ dist
 /package-lock.json
 /client/package-lock.json
 
-/public/geo/**/*
+# /public/geo/**/*
 /public/javascripts/**/
 /public/stylesheets/style.css
 /public/stylesheets/style.css.map
@@ -179,7 +179,7 @@ client/node_modules
 docker/redis/tmp.conf
 !docker/redis/.conf
 
-data/geo/**/*
+# data/geo/**/*
 data/raw/ipsum.txt
 /yarn.lock
 /client/yarn.lock

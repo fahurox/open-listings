@@ -17,7 +17,7 @@ export const getStateNamesByLang = (lang) => {
             return country.states.features.map((f) => f.properties.nom)
         case 'OLisings-en':
             return country.states.features.map((f) => f.properties.nom)
-        case 'OLisings-it':
+        case 'OLisings-ar':
             return lang === 'en'
                 ? country.states.features.map((f) => f.properties.name)
                 : country.states.features.map((f) => f.properties[`name_${lang}`] || f.properties.name)

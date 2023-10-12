@@ -59,7 +59,7 @@ export default function blabla(context) {
     const final = { ...userFriendlyMsg, ...UXConstraints }
     // Send JSON for API env
     if (NODE_ENV === 'api') this.send(context[0])
-    // Crashes on Windows because of Path
+    // Crashes on Windows because of
     else this.view(`./pages/${route}`, final)
 }
 const appName = config('APP_NAME')

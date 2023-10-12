@@ -2,6 +2,11 @@
 
 **Open-listings is a listings' website, particularly, similar to the open-listings we see on news-papers. Let's bring the same idea to the web; This time offering rich input forms, interactive UI, an interactive Map all presented to user with multiple languages and most importantly respecting users privacy.**  
 
+### Countdown to production 
+<p align="center">
+  <img src="http://i.countdownmail.com/2tvr2x.gif" border="0" alt="countdownmail.com"/> 
+</p>
+
 <br>
 <p align="center">
   <img src="https://github.com/yanna92yar/open-listings-data/blob/main/info.gif" width="700">

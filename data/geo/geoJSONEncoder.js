@@ -13,9 +13,9 @@ switch (config('APP_NAME')) {
         states = require('./states.en.min.json')
         borders = require('./borders.en.json')
         break
-    case 'OLisings-it':
-        states = require('./states.it.min.json')
-        borders = require('./borders.it.json')
+    case 'OLisings-ar':
+        states = require('./states.ar.min.json')
+        borders = require('./borders.ar.json')
         break
     default:
         break
@@ -31,7 +31,7 @@ function getBorders() {
             return borders.features[0].geometry.coordinates[0]
         case 'OLisings-en':
             return borders.features[0].geometry.geometries[0].coordinates
-        case 'OLisings-it':
+        case 'OLisings-ar':
             return borders.features[0].geometry.coordinates
         default:
             break
@@ -44,7 +44,7 @@ function getStates() {
             return states.features.map((a) => a.geometry.coordinates[0])
         case 'OLisings-en':
             return states.features.map((a) => a.geometry.coordinates[0])
-        case 'OLisings-it':
+        case 'OLisings-ar':
             return states.features.map((a) => a.geometry.coordinates[0])
 
         default:
@@ -62,7 +62,7 @@ const getStateNames = (lang) => {
             return states.features.map((f) => f.properties.nom)
         case 'OLisings-fr':
             return states.features.map((f) => f.properties.nom)
-        case 'OLisings-it':
+        case 'OLisings-ar':
             return lang === 'en'
                 ? states.features.map((f) => f.properties.name)
                 : states.features.map((f) => f.properties[`name_${lang}`] || f.properties.name)

@@ -29,7 +29,8 @@ function purgeKeys(redisDB) {
  */
 export default function (redisDB, mongoDB) {
     this.cacheIds = async function () {
-        if (!mongoDB) return
+        if (!config('IS_REDIS_CACHE') || !config('IS_MONGO_DB')) return
+
         const getIds = async function (collName) {
             /** @type { import("mongodb").Collection } */
             let collection = mongoDB.collection(collName)

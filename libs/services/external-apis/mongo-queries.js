@@ -29,6 +29,7 @@ CommentModel.sent = new Date()
 /**
  * This function returns an ObjectId embedded with a given dateTime
  * Accepts number of days since document was created
+ *
  * Author: https://stackoverflow.com/a/8753670/1951298
  * @param {Number} days
  * @return {object}
@@ -164,12 +165,12 @@ export default function (redisDB, log) {
         const release = await locks.get(id).acquire()
         const canView = (doc) => isAdmin || doc.usr === viewer || (doc['a'] && !doc['d'])
         const unique = `glid:${id}`
-        const cached = config('IS_REDIS_CACHE') && (await redisDB.exists(unique)) // && false
+        const useCache = config('IS_REDIS_CACHE') && (await redisDB.exists(unique)) // && false
         collection = dataStores[Collections.Listing]
         // const query = isAdmin ? { a: false } : JSON.parse(JSON.stringify(baseQuery))
         const query = {}
         const projection = { geolocation: 0.0 }
-        if (cached) {
+        if (useCache) {
             const upLevel = (await redisDB.hget(`up-ids`, id)) || '1'
             if (upLevel === '1') {
                 const buffer = await redisDB.getBuffer(unique)
@@ -190,7 +191,7 @@ export default function (redisDB, log) {
         if (!listingDoc) {
             if (config('IS_REDIS_CACHE')) {
                 await redisDB.hdel(`up-ids`, id)
-                if (cached) await redisDB.del(unique)
+                if (useCache) await redisDB.del(unique)
             }
             release()
             return
@@ -224,11 +225,11 @@ export default function (redisDB, log) {
     this.getListingsSince = async function (days, section, pagination) {
         log('#### getListingsSince')
         const unique = `${section || 'index'}-${days}-${pagination.perPage}-${pagination.page}`
-        const cached = config('IS_REDIS_CACHE') && (await redisDB.exists(`gls:${unique}`))
+        const useCache = config('IS_REDIS_CACHE') && (await redisDB.exists(`gls:${unique}`))
         collection = dataStores[Collections.Listing]
         const objectId = getObjectId(days)
         const query = JSON.parse(JSON.stringify(baseQuery))
-        query._id = { $gt: objectId }
+        query._id = { $lt: objectId }
         if (section) {
             query.section = section
             pagination.perPage = perPage(section)
@@ -238,7 +239,7 @@ export default function (redisDB, log) {
         }
         // Because cache mechanism is only one to many
         // only deal with pages with section 'index' (most important)
-        if (cached && section === '') {
+        if (useCache && section === '') {
             const upIds = await redisDB.hkeys(`up-ids`)
             const glsIds = await redisDB.smembers(`gls-ids:${unique}`)
             // get gls-ids:${unique} and intersect with glid-ids
@@ -262,8 +263,10 @@ export default function (redisDB, log) {
             }
         }
 
+        // TODO: Why $gt is not working I'm so angry
+        // should be await paginate(collection.find(query, baseProjection).sort(baseSort), pagination)
         let listingsDocs = dataStores._isMongo
-            ? await paginate(collection.find(query, baseProjection).sort(baseSort), pagination)
+            ? await paginate(collection.find().sort(baseSort), pagination)
             : await paginate(collection.findAsync({}).projection(baseProjection).sort(baseSort), pagination)
 
         transformers['createTime'](listingsDocs)
@@ -282,6 +285,7 @@ export default function (redisDB, log) {
             // doc.title = doc.desc.substring(0, Math.round(substring / 2))
             listingDoc._id = listingDoc._id.toHexString ? listingDoc._id.toHexString() : listingDoc._id
         })
+
         // Remove email
         transformers['redact'](listingsDocs, ['usr'])
         let newQResult = { documents: listingsDocs, count: count }
