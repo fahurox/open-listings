@@ -12,7 +12,7 @@ import {
     Market,
     Skill,
     User,
-    UserModel,
+    UserModel
 } from '../../constraints/models.js'
 import { default as trans, default as transformers } from '../../constraints/transformers.js'
 import * as Strings from '../../services/routines/strings.js'
@@ -590,6 +590,7 @@ export default function (redisDB, log) {
                 $centerSphere: [[parseFloat(longitude), parseFloat(latitude)], 10 / 3963.2], // 10 miles = 16.09344 kilometers
             },
         }
+
         const docs = await paginate(collection.find(query, baseProjection).sort(baseSort), pagination)
         const count = await collection.countDocuments(query)
         return { documents: docs, count: count }

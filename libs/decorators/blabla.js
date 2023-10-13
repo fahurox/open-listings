@@ -130,7 +130,6 @@ function localize(data, route, kind, req, reply) {
         userFriendlyMsg.error = [...warnings, ...data.errors, ...userFriendlyMsg.error].filter(Boolean)
     } else userFriendlyMsg.error = []
 
-    console.log(userFriendlyMsg.error)
     // TODO: Add suggestions to toasty on UI
     userFriendlyMsg.suggestions = suggestions.filter(Boolean)
     userFriendlyMsg['meta'] = userFriendlyMsg['intro'] ? userFriendlyMsg['intro'] : ''
