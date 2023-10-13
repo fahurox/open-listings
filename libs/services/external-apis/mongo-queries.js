@@ -1,5 +1,4 @@
 import { Mutex } from 'async-mutex'
-import { ObjectId } from 'mongodb'
 import perPage from '../../../config/options/perPage.js'
 import { Collections, Sections } from '../../../types.d.js'
 import { config, dataStores } from '../../../utils.js'
@@ -13,7 +12,7 @@ import {
     Market,
     Skill,
     User,
-    UserModel,
+    UserModel
 } from '../../constraints/models.js'
 import { default as trans, default as transformers } from '../../constraints/transformers.js'
 import * as Strings from '../../services/routines/strings.js'
@@ -39,7 +38,9 @@ function getObjectId(days) {
     days = days || 14
     yesterday.setDate(yesterday.getDate() - days)
     const hexSeconds = Math.floor(yesterday.getTime() / 1000).toString(16)
-    return new ObjectId(hexSeconds + '0000000000000000')
+    const strValue = hexSeconds + '0000000000000000'
+    // return new ObjectId(strValue)
+    return strValue
 }
 
 /**
@@ -182,9 +183,9 @@ export default function (redisDB, log) {
             }
             if (upLevel === '2' || upLevel === '3') await redisDB.del(unique)
         }
-        // query._id = new ObjectId(id)
+
         const listingDoc = dataStores._isMongo
-            ? await collection.findOne({ ...query, _id: new ObjectId(id) }, { projection: projection })
+            ? await collection.findOne({ ...query, _id: (id) }, { projection: projection })
             : await collection.findOneAsync({ ...query, _id: id }).projection(projection)
 
         // document has been removed from DB or doesn't exist at all
@@ -229,7 +230,7 @@ export default function (redisDB, log) {
         collection = dataStores[Collections.Listing]
         const objectId = getObjectId(days)
         const query = JSON.parse(JSON.stringify(baseQuery))
-        query._id = { $lt: objectId }
+        query._id = { $gt: objectId }
         if (section) {
             query.section = section
             pagination.perPage = perPage(section)
@@ -266,7 +267,7 @@ export default function (redisDB, log) {
         // TODO: Why $gt is not working I'm so angry
         // should be await paginate(collection.find(query, baseProjection).sort(baseSort), pagination)
         let listingsDocs = dataStores._isMongo
-            ? await paginate(collection.find().sort(baseSort), pagination)
+            ? await paginate(collection.find(query, baseProjection).sort(baseSort), pagination)
             : await paginate(collection.findAsync({}).projection(baseProjection).sort(baseSort), pagination)
 
         transformers['createTime'](listingsDocs)
@@ -422,12 +423,12 @@ export default function (redisDB, log) {
         log('#### updateUser')
         return dataStores._isMongo
             ? await dataStores[Collections.Users].updateOne(
-                  { _id: new ObjectId(elem._id) },
+                  { _id: (elem._id) },
                   { $set: elem },
                   { upsert: false },
               )
             : await dataStores[Collections.Users].updateAsync(
-                  { _id: new ObjectId(elem._id) },
+                  { _id: (elem._id) },
                   { $set: elem },
                   { upsert: false },
               )
@@ -616,7 +617,7 @@ export default function (redisDB, log) {
         const release = await locks.get(id).acquire()
         collection = dataStores[collName]
         const query = {}
-        query._id = new ObjectId(id)
+        query._id = (id)
 
         const docs = dataStores._isMongo ? await collection.findOne(query) : await collection.findOneAsync(query)
         if (!docs) {
@@ -811,7 +812,7 @@ export default function (redisDB, log) {
         const release = await locks.get(id).acquire()
         delete elem._id
         const result = await dataStores[collName].updateOne(
-            { _id: new ObjectId(elem._id) },
+            { _id: (elem._id) },
             { $set: elem },
             { upsert: false },
         )
@@ -828,7 +829,7 @@ export default function (redisDB, log) {
      */
     this.removeDocument = async function (id, collName) {
         log('#### removeDocument')
-        return await dataStores[collName].deleteOne({ _id: new ObjectId(id) })
+        return await dataStores[collName].deleteOne({ _id: (id) })
     }
 
     // this.existsDocument = async function (id, collName) {
