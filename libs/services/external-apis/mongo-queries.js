@@ -12,7 +12,7 @@ import {
     Market,
     Skill,
     User,
-    UserModel
+    UserModel,
 } from '../../constraints/models.js'
 import { default as trans, default as transformers } from '../../constraints/transformers.js'
 import * as Strings from '../../services/routines/strings.js'
@@ -185,7 +185,7 @@ export default function (redisDB, log) {
         }
 
         const listingDoc = dataStores._isMongo
-            ? await collection.findOne({ ...query, _id: (id) }, { projection: projection })
+            ? await collection.findOne({ ...query, _id: id }, { projection: projection })
             : await collection.findOneAsync({ ...query, _id: id }).projection(projection)
 
         // document has been removed from DB or doesn't exist at all
@@ -422,16 +422,8 @@ export default function (redisDB, log) {
     this.updateUser = async function (elem) {
         log('#### updateUser')
         return dataStores._isMongo
-            ? await dataStores[Collections.Users].updateOne(
-                  { _id: (elem._id) },
-                  { $set: elem },
-                  { upsert: false },
-              )
-            : await dataStores[Collections.Users].updateAsync(
-                  { _id: (elem._id) },
-                  { $set: elem },
-                  { upsert: false },
-              )
+            ? await dataStores[Collections.Users].updateOne({ _id: elem._id }, { $set: elem }, { upsert: false })
+            : await dataStores[Collections.Users].updateAsync({ _id: elem._id }, { $set: elem }, { upsert: false })
     }
 
     /**
@@ -617,7 +609,7 @@ export default function (redisDB, log) {
         const release = await locks.get(id).acquire()
         collection = dataStores[collName]
         const query = {}
-        query._id = (id)
+        query._id = id
 
         const docs = dataStores._isMongo ? await collection.findOne(query) : await collection.findOneAsync(query)
         if (!docs) {
@@ -811,11 +803,7 @@ export default function (redisDB, log) {
         // @ts-ignore
         const release = await locks.get(id).acquire()
         delete elem._id
-        const result = await dataStores[collName].updateOne(
-            { _id: (elem._id) },
-            { $set: elem },
-            { upsert: false },
-        )
+        const result = await dataStores[collName].updateOne({ _id: elem._id }, { $set: elem }, { upsert: false })
         if (config('IS_REDIS_CACHE')) await redisDB.hset(`up-ids`, id, '1')
         release()
         return result
@@ -829,7 +817,7 @@ export default function (redisDB, log) {
      */
     this.removeDocument = async function (id, collName) {
         log('#### removeDocument')
-        return await dataStores[collName].deleteOne({ _id: (id) })
+        return await dataStores[collName].deleteOne({ _id: id })
     }
 
     // this.existsDocument = async function (id, collName) {

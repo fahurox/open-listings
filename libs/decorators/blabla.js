@@ -125,7 +125,7 @@ function localize(data, route, kind, req, reply) {
     //     d) `error` generated in `common.json` namespace
     // back in `userFriendlyMsg.error`
     data.errors = [data.errors].flat().filter(Boolean)
-    
+
     if (userFriendlyMsg.error || data.errors.length || warnings.length) {
         userFriendlyMsg.error = [...warnings, ...data.errors, ...userFriendlyMsg.error].filter(Boolean)
     } else userFriendlyMsg.error = []
