@@ -1,4 +1,5 @@
 import { Mutex } from 'async-mutex'
+import { ReturnDocument } from 'mongodb'
 import perPage from '../../../config/options/perPage.js'
 import { Collections, Sections } from '../../../types.d.js'
 import { config, dataStores } from '../../../utils.js'
@@ -69,11 +70,6 @@ export default function (redisDB, log) {
     this.insertListing = async function (elem) {
         log('#### insertListing')
         let listingDoc
-        elem.title = Strings.toTitle(elem.title, 30)
-        collection = dataStores[Collections.Listing]
-        
-        // https://stackoverflow.com/a/59841285/1951298
-        trans['geopoint'](elem)
         switch (elem.section) {
             case Sections.Markets:
                 listingDoc = new Market(elem)
@@ -93,8 +89,13 @@ export default function (redisDB, log) {
             default:
                 throw new Error('Should not happen')
         }
+
+        listingDoc.title = Strings.toTitle(listingDoc.title, 30)        
+        // https://stackoverflow.com/a/59841285/1951298
+        trans['geopoint'](listingDoc)
         transformers['createTime'](listingDoc)
 
+        collection = dataStores[Collections.Listing]
         const id = dataStores._isMongo
             ? (await collection.insertOne(listingDoc)).insertedId
             : (await collection.insertAsync(listingDoc))['_id']
@@ -108,15 +109,17 @@ export default function (redisDB, log) {
      */
     this.insertComment = async function (elem) {
         log('#### insertComment')
-        let commentDoc
-        elem.thread = Strings.toTitle(elem.thread, 30)
+        let commentDoc = new Comment(elem)
+
+        commentDoc.thread = Strings.toTitle(commentDoc.thread, 30)
+        transformers['createTime'](commentDoc)
+        
         collection = dataStores[Collections.Comment]
-        commentDoc = new Comment(elem)
         const id = dataStores._isMongo
             ? (await collection.insertOne(commentDoc)).insertedId
             : (await collection.insertAsync(commentDoc))['_id']
 
-        transformers['createTime'](commentDoc)
+        
         return id
     }
 
@@ -168,7 +171,7 @@ export default function (redisDB, log) {
         const canView = (doc) => isAdmin || doc.usr === viewer || (doc['a'] && !doc['d'])
         const unique = `glid:${id}`
         const useCache = config('IS_REDIS_CACHE') && (await redisDB.exists(unique)) // && false
-        collection = dataStores[Collections.Listing]
+        
         // const query = isAdmin ? { a: false } : JSON.parse(JSON.stringify(baseQuery))
         const query = {}
         const projection = { geolocation: 0.0 }
@@ -185,6 +188,7 @@ export default function (redisDB, log) {
             if (upLevel === '2' || upLevel === '3') await redisDB.del(unique)
         }
 
+        collection = dataStores[Collections.Listing]
         const listingDoc = dataStores._isMongo
             ? await collection.findOne({ ...query, _id: id }, { projection: projection })
             : await collection.findOneAsync({ ...query, _id: id }).projection(projection)
@@ -228,10 +232,10 @@ export default function (redisDB, log) {
         log('#### getListingsSince')
         const unique = `${section || 'index'}-${days}-${pagination.perPage}-${pagination.page}`
         const useCache = config('IS_REDIS_CACHE') && (await redisDB.exists(`gls:${unique}`))
-        collection = dataStores[Collections.Listing]
         const objectId = getObjectId(days)
         const query = JSON.parse(JSON.stringify(baseQuery))
         query._id = { $gt: objectId }
+
         if (section) {
             query.section = section
             pagination.perPage = perPage(section)
@@ -267,6 +271,7 @@ export default function (redisDB, log) {
 
         // TODO: Why $gt is not working I'm so angry
         // should be await paginate(collection.find(query, baseProjection).sort(baseSort), pagination)
+        collection = dataStores[Collections.Listing]
         let listingsDocs = dataStores._isMongo
             ? await paginate(collection.find(query, baseProjection).sort(baseSort), pagination)
             : await paginate(collection.findAsync({}).projection(baseProjection).sort(baseSort), pagination)
@@ -312,10 +317,11 @@ export default function (redisDB, log) {
      */
     this.getListingsByUser = async function (user) {
         log('#### getListingsByUser')
-        collection = dataStores[Collections.Listing]
         const query = {}
         const projection = { geolocation: 0.0 /*d: 0.0, a: 0.0*/ }
         query.usr = user
+
+        collection = dataStores[Collections.Listing]
         const listingsDocs = dataStores._isMongo
             ? await collection.find(query, projection).sort(baseSort).toArray()
             : await collection.findAsync(query).projection(projection).sort(baseSort)
@@ -333,10 +339,11 @@ export default function (redisDB, log) {
     this.getNotificationsByUser = async function (username) {
         log('#### getNotificationsByUser')
         const getComments = async (username) => {
-            collection = dataStores[Collections.Comment]
             const query = { $or: [{ from: username }, { to: username }] }
             const projection = {}
             const sort = ['threadId', 'sent']
+
+            collection = dataStores[Collections.Comment]
             const tmp = dataStores._isMongo
                 ? await collection.find(query, projection).sort(sort).toArray()
                 : await collection.findAsync(query).projection(projection).sort(sort)
@@ -347,9 +354,10 @@ export default function (redisDB, log) {
         }
 
         const getTopicListings = async (username) => {
-            collection = dataStores[Collections.Users]
             const query = {}
             query.username = username
+
+            collection = dataStores[Collections.Users]
             let topics = dataStores._isMongo ? await collection.find(query) : await collection.findAsync(query)
             if (!topics || !topics['topics']) return []
             // Subscribed-to topics for one user are like
@@ -358,9 +366,10 @@ export default function (redisDB, log) {
             const subsToTags = topics.filter((topic) => topic['t'] === 't').map((t) => t['topic'])
 
             // Now having the subscribed to topics, get listings in question
-            collection = dataStores[Collections.Listing]
             const query2 = {}
             query2['usr'] = { $in: subsToUsers }
+
+            collection = dataStores[Collections.Listing]
             const tmp1 = dataStores._isMongo
                 ? await collection.find(query2, baseProjection).sort(baseSort).toArray()
                 : await collection.findAsync(query2).projection(baseProjection).sort(baseSort)
@@ -386,6 +395,7 @@ export default function (redisDB, log) {
         log('#### subscribe')
         const query = {}
         query.username = username
+
         collection = dataStores[Collections.Users]
         return await collection.updateOne(query, { $push: { topics: { type, topic } } })
     }
@@ -397,9 +407,10 @@ export default function (redisDB, log) {
      */
     this.getUserById = async function (username) {
         log('#### getUserById')
-        collection = dataStores[Collections.Users]
         const query = {}
         query.username = username
+
+        collection = dataStores[Collections.Users]
         return dataStores._isMongo ? await collection.findOne(query) : await collection.findOneAsync(query)
     }
 
@@ -410,10 +421,10 @@ export default function (redisDB, log) {
      */
     this.insertUser = async function (elem) {
         log('#### insertUser')
-        let user
-        collection = dataStores[Collections.Users]
-        user = new User(elem)
+        let user = new User(elem)
         transformers['redact'](user, ['password'])
+
+        collection = dataStores[Collections.Users]
         const id = dataStores._isMongo
             ? (await collection.insertOne(user))['insertedId']
             : (await collection.insertAsync(user))['_id']
@@ -436,6 +447,7 @@ export default function (redisDB, log) {
         log('#### insertTmpUser')
         // createdAt: ttl index
         tempUser['createdAt'] = new Date()
+        
         collection = dataStores[Collections.Userstemp]
         const id = dataStores._isMongo
             ? (await collection.insertOne(tempUser))['insertedId']
@@ -450,9 +462,10 @@ export default function (redisDB, log) {
      */
     this.getTmpUserByToken = async function (token) {
         log('#### getTmpUserByToken')
-        collection = dataStores[Collections.Userstemp]
         const query = {}
         query.token = token
+
+        collection = dataStores[Collections.Userstemp]
         return dataStores._isMongo ? await collection.findOne(query) : await collection.findOneAsync(query)
     }
 
@@ -469,7 +482,6 @@ export default function (redisDB, log) {
     this.gwoogl = async function (phrase, exact, division, section, lang, pagination) {
         log('#### gwoogl')
         const daysBefore = 100
-        collection = dataStores[Collections.Listing]
         const ObjectId = getObjectId(daysBefore)
         phrase = exact ? `"${phrase.trim()}"` : phrase.trim()
         const query = JSON.parse(JSON.stringify(baseQuery))
@@ -479,6 +491,8 @@ export default function (redisDB, log) {
         if (lang !== 'und') query.lang = lang
         if (section) query.section = section
         if (division && division !== 'und') query.div = division
+
+        collection = dataStores[Collections.Listing]
         const docs = await paginate(
             collection
                 .find(query, { score: { $meta: 'textScore' } })
@@ -529,7 +543,6 @@ export default function (redisDB, log) {
     this.getListingsByTag = async function (tag, level, pagination) {
         log('#### getListingsByTag')
         const daysBefore = 100 // TODO: configuration
-        collection = dataStores[Collections.Listing]
         const ObjectId = getObjectId(daysBefore)
         const query = JSON.parse(JSON.stringify(baseQuery))
         query._id = { $gt: ObjectId }
@@ -546,6 +559,8 @@ export default function (redisDB, log) {
             default:
                 break
         }
+
+        collection = dataStores[Collections.Listing]
         const docs = await paginate(collection.find(query, baseProjection).sort(baseSort), pagination)
 
         const count = dataStores._isMongo ? await collection.countDocuments(query) : await collection.countAsync(query)
@@ -561,11 +576,12 @@ export default function (redisDB, log) {
     this.getListingsByDivision = async function (division, pagination) {
         log('#### getListingsByDivision')
         const daysBefore = 100 //TODO: configuration
-        collection = dataStores[Collections.Listing]
         const ObjectId = getObjectId(daysBefore)
         const query = JSON.parse(JSON.stringify(baseQuery))
         query._id = { $gt: ObjectId }
         query.div = division
+
+        collection = dataStores[Collections.Listing]
         const docs = await paginate(collection.find(query, baseProjection).sort(baseSort), pagination)
         const count = dataStores._isMongo ? await collection.countDocuments(query) : await collection.countAsync(query)
         return { documents: docs, count: count }
@@ -581,7 +597,6 @@ export default function (redisDB, log) {
     this.getListingsByGeolocation = async function (latitude, longitude, section, pagination) {
         log('#### getListingsByGeolocation')
         const daysBefore = 100 //TODO: configuration
-        collection = dataStores[Collections.Listing]
         const ObjectId = getObjectId(daysBefore)
         const query = JSON.parse(JSON.stringify(baseQuery))
         query._id = { $gt: ObjectId }
@@ -592,6 +607,7 @@ export default function (redisDB, log) {
             },
         }
 
+        collection = dataStores[Collections.Listing]
         const docs = await paginate(collection.find(query, baseProjection).sort(baseSort), pagination)
         const count = dataStores._isMongo ? await collection.countDocuments(query) : await collection.countAsync(query)
         return { documents: docs, count: count }
@@ -609,34 +625,35 @@ export default function (redisDB, log) {
         if (!locks.has(id)) locks.set(id, new Mutex())
         // @ts-ignore
         const release = await locks.get(id).acquire()
-        collection = dataStores[collName]
         const query = {}
         query._id = id
 
+        collection = dataStores[collName]
         const docs = dataStores._isMongo ? await collection.findOne(query) : await collection.findOneAsync(query)
         if (!docs) {
             release()
             return
         }
         const newValues = { $set: {} }
-
         newValues.$set[key] = !docs[0][key]
-        const options = dataStores._isMongo ? { returnOriginal: false } : { multi: false, returnUpdatedDocs: false }
+
+        
         const res = dataStores._isMongo
-            ? await collection.findOneAndUpdate(query, newValues, options)
-            : await collection.updateAsync(query, newValues, options)
+            ? await collection.findOneAndUpdate(query, newValues, { returnDocument: ReturnDocument.AFTER })
+            : await collection.updateAsync(query, newValues, { multi: false, returnUpdatedDocs: false })
 
         if (config('IS_REDIS_CACHE')) await redisDB.hset(`up-ids`, id, '3')
         release()
-        const listing = dataStores._isMongo ? res.value : res.affectedDocuments
+        const listing = dataStores._isMongo ? res?.value : res?.affectedDocuments
         transformers['!toCssClass'](listing)
         return listing
     }
 
     this.autocomplete = async function (keyword) {
         log('#### autocomplete')
-        collection = dataStores[Collections.Words]
         const keywordRgx = new RegExp('^' + keyword, 'i')
+
+        collection = dataStores[Collections.Words]
         return await collection.find({ _id: keywordRgx }, { _id: 1 }).toArray()
     }
 
@@ -730,12 +747,14 @@ export default function (redisDB, log) {
         }
         if (variable.isSame()) return variable.data
         variable.reset()
-        collection = dataStores[Collections.Listing]
+        
         const pipeline = [
             { $group: { _id: `$${context}`, count: { $sum: 1 } } },
             { $sort: { count: -1 } },
             { $limit: 10 },
         ]
+
+        collection = dataStores[Collections.Listing]
         const tmp = await collection.aggregate(pipeline).toArray()
         variable.data = tmp.map((a) => {
             return { tag: a._id, count: a.count }
@@ -750,7 +769,7 @@ export default function (redisDB, log) {
             return reformat(topTags.data)
         }
         topTags.reset()
-        collection = dataStores[Collections.Listing]
+        
         const pipeline = [
             { $unwind: '$tags' },
             // by section
@@ -764,6 +783,8 @@ export default function (redisDB, log) {
             { $sort: { count: -1 } },
             { $limit: 20 },
         ]
+
+        collection = dataStores[Collections.Listing]
         topTags.data = await collection.aggregate(pipeline).toArray()
         return reformat(topTags.data)
     }
@@ -777,7 +798,6 @@ export default function (redisDB, log) {
      */
     this.getListingsForModeration = async function (approving) {
         log('#### getListingsForModeration')
-        collection = dataStores[Collections.Listing]
         const query = approving ? { a: false } : {}
         const projection = {
             geolocation: 0.0,
@@ -788,6 +808,8 @@ export default function (redisDB, log) {
         }
         // TODO: find a solution to limit number of docs not to block UI
         const limit = approving ? 0 : 200
+
+        collection = dataStores[Collections.Listing]
         const docs = await collection.find(query, projection).sort(baseSort).limit(limit).toArray()
         const count = dataStores._isMongo ? await collection.countDocuments(query) : await collection.countAsync(query)
         return { documents: docs, count: count }
