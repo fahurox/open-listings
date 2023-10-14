@@ -49,9 +49,9 @@ function getObjectId(days) {
  * @param { Function } log
  */
 export default function (redisDB, log) {
-    /** @type { Map<string, Mutex> } */
+    /** @type { Map<string, import('async-mutex').Mutex> } */
     let locks = new Map()
-    /** @type { import('mongodb').Collection & import('@seald-io/nedb').default } */
+    /** @type { import('mongodb').Collection & import('@seald-io/nedb') } */
     let collection
     /** @type { import('mongodb').Filter<any> } */
     const baseQuery = { d: false, a: true }
@@ -71,6 +71,7 @@ export default function (redisDB, log) {
         let listingDoc
         elem.title = Strings.toTitle(elem.title, 30)
         collection = dataStores[Collections.Listing]
+        
         // https://stackoverflow.com/a/59841285/1951298
         trans['geopoint'](elem)
         switch (elem.section) {
@@ -487,7 +488,7 @@ export default function (redisDB, log) {
             pagination,
         )
 
-        const count = await collection.countDocuments(query)
+        const count = dataStores._isMongo ? await collection.countDocuments(query) : await collection.countAsync(query)
         const result = { documents: docs, count: count }
         if (count > 3) {
             refreshTopK(phrase)
@@ -547,7 +548,7 @@ export default function (redisDB, log) {
         }
         const docs = await paginate(collection.find(query, baseProjection).sort(baseSort), pagination)
 
-        const count = await collection.countDocuments(query)
+        const count = dataStores._isMongo ? await collection.countDocuments(query) : await collection.countAsync(query)
         return { documents: docs, count: count }
     }
 
@@ -566,7 +567,7 @@ export default function (redisDB, log) {
         query._id = { $gt: ObjectId }
         query.div = division
         const docs = await paginate(collection.find(query, baseProjection).sort(baseSort), pagination)
-        const count = await collection.countDocuments(query)
+        const count = dataStores._isMongo ? await collection.countDocuments(query) : await collection.countAsync(query)
         return { documents: docs, count: count }
     }
 
@@ -592,7 +593,7 @@ export default function (redisDB, log) {
         }
 
         const docs = await paginate(collection.find(query, baseProjection).sort(baseSort), pagination)
-        const count = await collection.countDocuments(query)
+        const count = dataStores._isMongo ? await collection.countDocuments(query) : await collection.countAsync(query)
         return { documents: docs, count: count }
     }
 
@@ -667,10 +668,11 @@ export default function (redisDB, log) {
                     .sort(baseSort),
                 pagination,
             )
-
-            const count = await collection.countDocuments({
-                _id: { $in: objIds },
-            })
+                const query = {
+                    _id: { $in: objIds },
+                };
+            const count = dataStores._isMongo ? await collection.countDocuments(query) : await collection.countAsync(query)
+            
             return { documents: docs, count: count }
         } else {
             return { documents: [], count: 0 }
@@ -787,7 +789,7 @@ export default function (redisDB, log) {
         // TODO: find a solution to limit number of docs not to block UI
         const limit = approving ? 0 : 200
         const docs = await collection.find(query, projection).sort(baseSort).limit(limit).toArray()
-        const count = await collection.countDocuments(query)
+        const count = dataStores._isMongo ? await collection.countDocuments(query) : await collection.countAsync(query)
         return { documents: docs, count: count }
     }
 
